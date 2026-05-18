@@ -25,6 +25,7 @@ polymarket_wallet_watch/
     score_wallets.py
     leader_follower.py
     replay_signals.py
+    study_opening_window.py
     report.py
   tests/
 
@@ -89,6 +90,46 @@ Replay signals with chronological split:
 Export leader/follower table:
 
     .venv/bin/python -m polymarket_wallet_watch.leader_follower --config config.yaml --output leader_follower_edges.csv
+
+## Opening Window Pair-Cost Study
+
+Current priority: before broad convergence work, test whether BTC 15m markets repeatedly offer cheap opening-window pair inventory such as:
+
+    YES 47 + NO 43 = 90
+
+Goal: measure whether the first 15-120 seconds after contract open offer systematically better dual-side inventory opportunities than later windows.
+
+Metrics:
+- best_yes_fill_open
+- best_no_fill_open
+- pair_cost_open = yes + no
+- min_pair_cost_full_contract
+- time_of_min_pair_cost
+- spread-adjusted pair cost
+- available liquidity at pair cost
+- later exit value before expiry
+- expiry pnl if held
+
+Questions:
+- Is open actually the best time?
+- Does open edge survive spread/slippage?
+- Does liquidity support $50, $200, $1000+ sizing?
+- Do high-alpha wallets enter both sides at open?
+- Do they hold, trim, or flip before expiry?
+
+Command:
+
+    .venv/bin/python -m polymarket_wallet_watch.study_opening_window --config config.yaml --window-seconds 120
+
+The command is bounded by default. For a 1 Hz two-minute capture, run with `--max-iterations 120 --poll-seconds 1` during an active open window. It only reads public CLOB books and writes SQLite rows to `opening_window_pair_costs`.
+
+Best next concrete step:
+1. Track 15m BTC markets at open.
+2. Snapshot YES/NO books every 1s for first 2 minutes.
+3. Compute pair_cost and liquidity.
+4. Compare against wallet entries.
+
+If open frequently gives `YES + NO < 0.95` after spread/slippage and enough visible depth, that becomes the base inventory research strategy. Wallet convergence becomes the confirmation layer.
 
 ## Safety boundary
 

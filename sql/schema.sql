@@ -59,6 +59,30 @@ CREATE TABLE IF NOT EXISTS market_snapshots (
 );
 CREATE INDEX IF NOT EXISTS idx_market_snapshots_token_ts ON market_snapshots(token_id, snapshot_ts);
 
+CREATE TABLE IF NOT EXISTS opening_window_pair_costs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    market_id TEXT NOT NULL,
+    market_slug TEXT,
+    open_ts TEXT NOT NULL,
+    observed_ts TEXT NOT NULL,
+    seconds_after_open REAL,
+    yes_best_ask REAL,
+    no_best_ask REAL,
+    yes_liquidity REAL,
+    no_liquidity REAL,
+    pair_cost REAL,
+    spread_adjusted_pair_cost REAL,
+    btc_price REAL,
+    strike REAL,
+    distance_from_strike REAL,
+    realized_vol_60s REAL,
+    source TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(market_id, observed_ts, source)
+);
+CREATE INDEX IF NOT EXISTS idx_opening_pair_cost_market_time ON opening_window_pair_costs(market_id, seconds_after_open);
+CREATE INDEX IF NOT EXISTS idx_opening_pair_cost_pair_cost ON opening_window_pair_costs(pair_cost);
+
 CREATE TABLE IF NOT EXISTS wallet_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     wallet_address TEXT NOT NULL,

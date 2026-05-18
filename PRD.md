@@ -46,7 +46,27 @@ Acceptance:
 - `python -m polymarket_wallet_watch.ingest_wallets --config config.yaml` stores normalized wallet_events.
 - `python -m polymarket_wallet_watch.report --since 24h` prints readable event rows.
 
-### Milestone 2: enrichment
+### Milestone 2: Opening Window Pair-Cost Study
+
+Scope:
+- Track BTC 15m markets at open.
+- Snapshot YES/NO CLOB books every 1s for the first 15-120 seconds.
+- Compute best_yes_fill_open, best_no_fill_open, pair_cost_open, min_pair_cost_full_contract, time_of_min_pair_cost, spread-adjusted pair cost, available liquidity, later exit value before expiry, and expiry pnl if held.
+- Compare opening pair costs against high-alpha wallet entries.
+
+Core questions:
+- Is open actually the best time?
+- Does open edge survive spread/slippage?
+- Does liquidity support $50, $200, $1000+ sizing?
+- Do high-alpha wallets enter both sides at open?
+- Do they hold, trim, or flip before expiry?
+
+Acceptance:
+- `study_opening_window --window-seconds 120` writes opening_window_pair_costs rows.
+- Report highlights minimum pair cost and spread-adjusted pair cost.
+- Command is read-only, bounded by default, and safe to run without private keys.
+
+### Milestone 3: enrichment
 
 Scope:
 - Join wallet_events to local BTC/Kalshi SQLite feed by event timestamp.
@@ -58,7 +78,7 @@ Acceptance:
 - Missing feed fields are null, not fabricated.
 - Enrichment provenance/version is stored.
 
-### Milestone 3: wallet alpha and convergence clusters
+### Milestone 4: wallet alpha and convergence clusters
 
 Scope:
 - Compute 15s/30s/60s/180s forward markouts.
@@ -73,7 +93,7 @@ Acceptance:
 - `detect_convergence --window 30` creates clusters only when at least N distinct wallets converge on the same market/outcome.
 - Leader/follower CSV/table is produced.
 
-### Milestone 4: replay
+### Milestone 5: replay
 
 Scope:
 - Generate signals when consensus_score exceeds threshold.
@@ -95,6 +115,7 @@ Required tables:
 - market_snapshots
 - wallet_events
 - wallet_positions
+- opening_window_pair_costs
 - enriched_wallet_events
 - wallet_alpha
 - convergence_clusters
