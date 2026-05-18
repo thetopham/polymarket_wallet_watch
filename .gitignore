@@ -12,6 +12,10 @@ config.yaml
 raw/
 logs/
 runs/
+data/*
+!data/reports/
+data/reports/*
+!data/reports/.gitkeep
 
 # python
 __pycache__/

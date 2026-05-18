@@ -11,21 +11,37 @@ from .db import connect, initialize_schema
 from .util import parse_ts
 
 
+def _quote_ident(name: str) -> str:
+    if not name.replace("_", "").isalnum():
+        raise ValueError(f"unsafe SQLite identifier: {name}")
+    return f'"{name}"'
+
+
+def _table_columns(feed_conn: sqlite3.Connection, table: str) -> set[str]:
+    table_sql = _quote_ident(table)
+    return {row[1] for row in feed_conn.execute(f"PRAGMA table_info({table_sql})")}
+
+
 def _nearest_btc_row(feed_conn: sqlite3.Connection, table: str, ts_col: str, price_cols: list[str], event_ts: str) -> tuple[float | None, list[float]]:
-    # Intentionally simple SQLite query; callers choose trusted local BTC/Kalshi feed path.
-    cols = [ts_col] + price_cols
-    col_sql = ",".join(cols)
+    # Intentionally simple SQLite query; callers choose trusted local Polymarket-native feed path.
+    available = _table_columns(feed_conn, table)
+    if ts_col not in available:
+        raise ValueError(f"timestamp column {ts_col!r} not found in feed table {table!r}")
+    usable_price_cols = [c for c in price_cols if c in available]
+    if not usable_price_cols:
+        raise ValueError(f"none of the configured price columns exist in feed table {table!r}: {price_cols}")
+    cols = [ts_col] + usable_price_cols
+    col_sql = ",".join(_quote_ident(c) for c in cols)
+    table_sql = _quote_ident(table)
+    ts_sql = _quote_ident(ts_col)
     rows = feed_conn.execute(
-        f"SELECT {col_sql} FROM {table} WHERE {ts_col} <= ? ORDER BY {ts_col} DESC LIMIT 180",
+        f"SELECT {col_sql} FROM {table_sql} WHERE {ts_sql} <= ? ORDER BY {ts_sql} DESC LIMIT 180",
         (event_ts,),
     ).fetchall()
     prices: list[float] = []
     for row in rows:
-        for col in price_cols:
-            try:
-                val = row[col]
-            except Exception:
-                val = None
+        for col in usable_price_cols:
+            val = row[col]
             if val is not None:
                 prices.append(float(val))
                 break
@@ -112,7 +128,7 @@ def upsert_enriched(conn: sqlite3.Connection, row: dict[str, Any]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Enrich wallet events with local BTC/Kalshi feed and CLOB state.")
+    parser = argparse.ArgumentParser(description="Enrich wallet events with local Polymarket-native BTC 1s feed and CLOB state.")
     parser.add_argument("--config", default="config.example.yaml")
     parser.add_argument("--limit", type=int, default=1000)
     args = parser.parse_args()
