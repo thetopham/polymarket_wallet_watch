@@ -1,9 +1,37 @@
 from polymarket_wallet_watch.db import connect, initialize_schema
 from polymarket_wallet_watch.study_opening_window import (
+    DEFAULT_CONTRACT_WINDOW_SECONDS,
     compute_pair_cost_row,
     format_opening_window_report,
     insert_pair_cost_row,
+    load_active_open_markets,
 )
+
+
+def test_default_contract_window_is_full_15_minutes():
+    assert DEFAULT_CONTRACT_WINDOW_SECONDS == 15 * 60
+
+
+def test_load_active_open_markets_uses_full_contract_window(tmp_path):
+    conn = connect(tmp_path / "watch.sqlite3")
+    initialize_schema(conn)
+    conn.execute(
+        """
+        INSERT INTO markets(market_id, slug, start_ts, close_ts, active, closed)
+        VALUES
+          ('inside', 'inside-window', datetime('now', '-899 seconds'), datetime('now', '+60 seconds'), 1, 0),
+          ('outside', 'outside-window', datetime('now', '-901 seconds'), datetime('now', '+60 seconds'), 1, 0),
+          ('closed', 'closed-window', datetime('now', '-100 seconds'), datetime('now', '-1 second'), 1, 1)
+        """
+    )
+    conn.commit()
+
+    rows = load_active_open_markets(conn, DEFAULT_CONTRACT_WINDOW_SECONDS)
+    ids = {row["market_id"] for row in rows}
+
+    assert "inside" in ids
+    assert "outside" not in ids
+    assert "closed" not in ids
 
 
 def test_schema_creates_opening_window_pair_costs(tmp_path):
@@ -83,7 +111,7 @@ def test_insert_pair_cost_row_and_report_highlights_min(tmp_path):
 
     report = format_opening_window_report(conn, limit=10)
 
-    assert "Opening Window Pair-Cost Study" in report
+    assert "Full Contract Pair-Cost Study" in report
     assert "m1" in report
     assert "pair=0.9000" in report
     assert "spread_adj=0.9200" in report

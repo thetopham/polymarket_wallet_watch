@@ -65,8 +65,8 @@ replay:
 
 opening_window_pair_cost:
   enabled: true
-  window_seconds: 120
+  window_seconds: 900
   poll_seconds: 1
   pair_cost_threshold: 0.95
   sizing_checks_usd: [50, 200, 1000]
-  note: Read-only CLOB snapshots for the first 15-120 seconds after BTC 15m contract open.
+  note: Read-only CLOB snapshots across the full 15-minute BTC contract window.

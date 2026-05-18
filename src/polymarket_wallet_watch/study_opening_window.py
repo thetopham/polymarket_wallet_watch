@@ -10,6 +10,8 @@ from .db import connect, initialize_schema, insert_dict
 from .ingest_orderbooks import fetch_orderbook
 from .util import parse_ts, to_float, utc_now_iso, write_raw_json
 
+DEFAULT_CONTRACT_WINDOW_SECONDS = 15 * 60
+
 
 def _best_ask(book: dict[str, Any]) -> tuple[float | None, float | None]:
     asks = book.get("asks") or book.get("sell") or []
@@ -97,8 +99,8 @@ def load_active_open_markets(conn: sqlite3.Connection, window_seconds: int) -> l
         """
         SELECT * FROM markets
         WHERE start_ts IS NOT NULL
-          AND start_ts <= ?
-          AND (close_ts IS NULL OR close_ts > ?)
+          AND strftime('%s', start_ts) <= strftime('%s', ?)
+          AND (close_ts IS NULL OR strftime('%s', close_ts) > strftime('%s', ?))
           AND (strftime('%s', ?) - strftime('%s', start_ts)) BETWEEN 0 AND ?
         ORDER BY start_ts DESC
         """,
@@ -128,8 +130,8 @@ def collect_opening_window_once(conn: sqlite3.Connection, config: dict[str, Any]
         observed_ts = utc_now_iso()
         yes_book = fetch_orderbook(config, yes_token)
         no_book = fetch_orderbook(config, no_token)
-        write_raw_json(raw_dir, f"opening-window-{market['market_id']}-yes", yes_book)
-        write_raw_json(raw_dir, f"opening-window-{market['market_id']}-no", no_book)
+        write_raw_json(raw_dir, f"full-contract-{market['market_id']}-yes", yes_book)
+        write_raw_json(raw_dir, f"full-contract-{market['market_id']}-no", no_book)
         row = compute_pair_cost_row(
             market_id=market["market_id"],
             market_slug=market["slug"],
@@ -157,14 +159,14 @@ def format_opening_window_report(conn: sqlite3.Connection, *, limit: int = 20) -
         (limit,),
     ).fetchall()
     lines = [
-        "Opening Window Pair-Cost Study — READ-ONLY RESEARCH",
-        "Goal: measure whether first 15-120s after open offers better dual-side inventory opportunities.",
+        "Full Contract Pair-Cost Study — READ-ONLY RESEARCH",
+        "Goal: measure pair-cost opportunities across the full 15-minute BTC contract window.",
         "Safety: public CLOB reads only; no private keys, no orders.",
         f"Rows: {len(rows)}",
         "",
     ]
     if not rows:
-        lines.append("No opening-window pair-cost rows yet. Run study_opening_window during an active market open window.")
+        lines.append("No full-contract pair-cost rows yet. Run study_opening_window during an active 15-minute contract window.")
         return "\n".join(lines)
     for r in rows:
         pair = f"{r['pair_cost']:.4f}" if r["pair_cost"] is not None else "None"
@@ -178,12 +180,12 @@ def format_opening_window_report(conn: sqlite3.Connection, *, limit: int = 20) -
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Study opening-window YES+NO pair costs from public CLOB books (read-only).")
+    parser = argparse.ArgumentParser(description="Study full 15-minute YES+NO pair costs from public CLOB books (read-only).")
     parser.add_argument("--config", default="config.example.yaml")
-    parser.add_argument("--window-seconds", type=int, default=120)
+    parser.add_argument("--window-seconds", type=int, default=DEFAULT_CONTRACT_WINDOW_SECONDS)
     parser.add_argument("--poll-seconds", type=float, default=1.0)
-    parser.add_argument("--max-iterations", type=int, default=1, help="Bounded by default; increase for a 1 Hz open-window capture.")
-    parser.add_argument("--report", action="store_true", help="Only print stored opening-window rows.")
+    parser.add_argument("--max-iterations", type=int, default=1, help="Bounded by default; use 900 with --poll-seconds 1 for a full 15-minute 1 Hz capture.")
+    parser.add_argument("--report", action="store_true", help="Only print stored full-contract pair-cost rows.")
     args = parser.parse_args()
     cfg = load_config(args.config)
     conn = connect(cfg.db_path)

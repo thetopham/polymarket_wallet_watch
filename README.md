@@ -91,13 +91,13 @@ Export leader/follower table:
 
     .venv/bin/python -m polymarket_wallet_watch.leader_follower --config config.yaml --output leader_follower_edges.csv
 
-## Opening Window Pair-Cost Study
+## Full Contract Pair-Cost Study
 
-Current priority: before broad convergence work, test whether BTC 15m markets repeatedly offer cheap opening-window pair inventory such as:
+Current priority: before broad convergence work, test whether BTC 15m markets repeatedly offer cheap full-contract pair inventory such as:
 
     YES 47 + NO 43 = 90
 
-Goal: measure whether the first 15-120 seconds after contract open offer systematically better dual-side inventory opportunities than later windows.
+Goal: measure pair-cost opportunities across the full 15-minute contract window and identify whether the minimum usable YES+NO cost occurs at open, mid-contract, or near close.
 
 Metrics:
 - best_yes_fill_open
@@ -111,25 +111,25 @@ Metrics:
 - expiry pnl if held
 
 Questions:
-- Is open actually the best time?
-- Does open edge survive spread/slippage?
-- Does liquidity support $50, $200, $1000+ sizing?
-- Do high-alpha wallets enter both sides at open?
+- Is open, mid-contract, or near-close actually the best time?
+- Does pair-cost edge survive spread/slippage?
+- Does visible liquidity support $50, $200, $1000+ sizing throughout the contract?
+- Do high-alpha wallets enter both sides during the contract window?
 - Do they hold, trim, or flip before expiry?
 
 Command:
 
-    .venv/bin/python -m polymarket_wallet_watch.study_opening_window --config config.yaml --window-seconds 120
+    .venv/bin/python -m polymarket_wallet_watch.study_opening_window --config config.yaml --window-seconds 900
 
-The command is bounded by default. For a 1 Hz two-minute capture, run with `--max-iterations 120 --poll-seconds 1` during an active open window. It only reads public CLOB books and writes SQLite rows to `opening_window_pair_costs`.
+The command is bounded by default. For a 1 Hz full-contract capture, run with `--max-iterations 900 --poll-seconds 1` during an active 15-minute contract window. It only reads public CLOB books and writes SQLite rows to `opening_window_pair_costs`.
 
 Best next concrete step:
-1. Track 15m BTC markets at open.
-2. Snapshot YES/NO books every 1s for first 2 minutes.
+1. Track 15m BTC markets from open through close.
+2. Snapshot YES/NO books every 1s for full 15 minutes.
 3. Compute pair_cost and liquidity.
 4. Compare against wallet entries.
 
-If open frequently gives `YES + NO < 0.95` after spread/slippage and enough visible depth, that becomes the base inventory research strategy. Wallet convergence becomes the confirmation layer.
+If the full contract frequently gives `YES + NO < 0.95` after spread/slippage and enough visible depth, that becomes the base inventory research strategy. Wallet convergence becomes the confirmation layer.
 
 ## Safety boundary
 

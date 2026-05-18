@@ -46,23 +46,23 @@ Acceptance:
 - `python -m polymarket_wallet_watch.ingest_wallets --config config.yaml` stores normalized wallet_events.
 - `python -m polymarket_wallet_watch.report --since 24h` prints readable event rows.
 
-### Milestone 2: Opening Window Pair-Cost Study
+### Milestone 2: Full Contract Pair-Cost Study
 
 Scope:
-- Track BTC 15m markets at open.
-- Snapshot YES/NO CLOB books every 1s for the first 15-120 seconds.
+- Track BTC 15m markets from open through close.
+- Snapshot YES/NO CLOB books every 1s for the full 15-minute contract window.
 - Compute best_yes_fill_open, best_no_fill_open, pair_cost_open, min_pair_cost_full_contract, time_of_min_pair_cost, spread-adjusted pair cost, available liquidity, later exit value before expiry, and expiry pnl if held.
-- Compare opening pair costs against high-alpha wallet entries.
+- Compare full-contract pair costs against high-alpha wallet entries.
 
 Core questions:
-- Is open actually the best time?
-- Does open edge survive spread/slippage?
-- Does liquidity support $50, $200, $1000+ sizing?
-- Do high-alpha wallets enter both sides at open?
+- Is open, mid-contract, or near-close actually the best time?
+- Does pair-cost edge survive spread/slippage?
+- Does visible liquidity support $50, $200, $1000+ sizing throughout the contract?
+- Do high-alpha wallets enter both sides during the contract window?
 - Do they hold, trim, or flip before expiry?
 
 Acceptance:
-- `study_opening_window --window-seconds 120` writes opening_window_pair_costs rows.
+- `study_opening_window --window-seconds 900` writes opening_window_pair_costs rows.
 - Report highlights minimum pair cost and spread-adjusted pair cost.
 - Command is read-only, bounded by default, and safe to run without private keys.
 
