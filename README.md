@@ -26,6 +26,7 @@ polymarket_wallet_watch/
     leader_follower.py
     replay_signals.py
     study_opening_window.py
+    follow_wallet.py
     report.py
   tests/
 
@@ -65,6 +66,19 @@ Print last 100 normalized wallet events:
 
     .venv/bin/python -m polymarket_wallet_watch.report --config config.yaml --since 24h
 
+Follow the focus wallet individually:
+
+    .venv/bin/python -m polymarket_wallet_watch.follow_wallet --config config.yaml
+
+Follow any one public wallet explicitly:
+
+    .venv/bin/python -m polymarket_wallet_watch.follow_wallet \
+      --config config.yaml \
+      --wallet 0xce25e214d5cfe4f459cf67f08df581885aae7fdc \
+      --since 24h
+
+The focus wallet is tracked individually first. Two-wallet convergence is then used as confirmation, not as a replacement for understanding the wallet on its own.
+
 ## Later milestone commands
 
 Fetch public orderbook snapshots for known token IDs:
@@ -79,9 +93,9 @@ Score wallets:
 
     .venv/bin/python -m polymarket_wallet_watch.score_wallets --config config.yaml
 
-Detect convergence clusters:
+Detect two-wallet convergence clusters:
 
-    .venv/bin/python -m polymarket_wallet_watch.detect_convergence --config config.yaml --window 30
+    .venv/bin/python -m polymarket_wallet_watch.detect_convergence --config config.yaml --window 30 --min-wallets 2
 
 Replay signals with chronological split:
 

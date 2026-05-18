@@ -28,9 +28,17 @@ polygon:
 
 wallets:
   # Replace with selected public Polymarket wallet/proxy addresses.
+  - address: "0xce25e214d5cfe4f459cf67f08df581885aae7fdc"
+    label: focus_wallet
+    enabled: true
   - address: "0x0000000000000000000000000000000000000000"
     label: example_placeholder
     enabled: false
+
+follow_wallet:
+  enabled: true
+  focus_wallet: "0xce25e214d5cfe4f459cf67f08df581885aae7fdc"
+  note: Follow this wallet individually in read-only mode; compare its events against two-wallet convergence clusters.
 
 btc_feed:
   sqlite_path: /home/matt/workspace/kalshi-btc-15m-bot/feed/kalshi-btc-1s.sqlite3
