@@ -1,0 +1,27 @@
+# local secrets and runtime state
+.env
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+
+# raw API response logs can grow large and may include rate-limit/account metadata
+raw/
+logs/
+runs/
+
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# editor
+.DS_Store
+.vscode/
+.idea/

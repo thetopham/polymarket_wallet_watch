@@ -1,0 +1,64 @@
+database:
+  path: data/polymarket_wallet_watch.sqlite3
+  raw_response_dir: raw
+
+safety:
+  mode: read_only_research
+  allow_private_keys: false
+  allow_order_submission: false
+  allow_live_trading: false
+
+polymarket:
+  gamma_base_url: https://gamma-api.polymarket.com
+  clob_base_url: https://clob.polymarket.com
+  data_api_base_url: https://data-api.polymarket.com
+  user_agent: polymarket-wallet-watch/0.1 read-only research
+  markets_query:
+    active: true
+    closed: false
+    limit: 100
+    tag_slug: bitcoin
+  wallet_trade_limit: 500
+
+polygon:
+  rpc_url_env: POLYGON_RPC_URL
+  api_key_env: POLYGONSCAN_API_KEY
+  enabled: false
+  note: Optional read-only settlement/position backfill. Never store private keys.
+
+wallets:
+  # Replace with selected public Polymarket wallet/proxy addresses.
+  - address: "0x0000000000000000000000000000000000000000"
+    label: example_placeholder
+    enabled: false
+
+btc_feed:
+  sqlite_path: /home/matt/workspace/kalshi-btc-15m-bot/feed/kalshi-btc-1s.sqlite3
+  table: snapshots
+  timestamp_column: ts
+  price_column_candidates: [btc_price, chainlink_btc_price, price]
+  enabled: true
+
+convergence:
+  windows_seconds: [5, 15, 30, 60]
+  min_wallets: 2
+  recency_half_life_seconds: 30
+  consensus_threshold: 5.0
+
+scoring:
+  forward_markout_seconds: [15, 30, 60, 180]
+  min_events_for_alpha: 10
+  market_maker_min_events: 50
+  market_maker_both_side_ratio: 0.35
+  market_maker_sell_ratio: 0.25
+
+replay:
+  train_fraction: 0.7
+  validation_fraction: 0.15
+  slippage_bps: 50
+  entry_modes: [taker, passive]
+  filters:
+    min_seconds_to_close: 30
+    max_seconds_to_close: 600
+    max_spread: 0.08
+    min_liquidity: 100
