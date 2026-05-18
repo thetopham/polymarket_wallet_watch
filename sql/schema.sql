@@ -255,3 +255,93 @@ CREATE TABLE IF NOT EXISTS raw_api_responses (
     response_json TEXT NOT NULL,
     fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS execution_quality_events (
+    event_id INTEGER PRIMARY KEY,
+    wallet_address TEXT NOT NULL,
+    market_slug TEXT,
+    market_id TEXT,
+    token_id TEXT,
+    side TEXT,
+    action TEXT,
+    fill_price REAL,
+    size REAL,
+    notional REAL,
+    event_ts TEXT NOT NULL,
+    pre_snapshot_ts TEXT,
+    post_snapshot_ts TEXT,
+    pre_best_bid REAL,
+    pre_best_ask REAL,
+    pre_mid REAL,
+    pre_spread REAL,
+    post_mid_5s REAL,
+    post_mid_15s REAL,
+    post_mid_60s REAL,
+    fill_vs_bid REAL,
+    fill_vs_ask REAL,
+    fill_vs_mid REAL,
+    effective_spread_captured REAL,
+    markout_5s REAL,
+    markout_15s REAL,
+    markout_60s REAL,
+    seconds_after_open REAL,
+    phase TEXT,
+    likely_liquidity_role TEXT,
+    fill_quality_tags TEXT,
+    analysis_version TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(event_id) REFERENCES wallet_events(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_execution_quality_wallet_market ON execution_quality_events(wallet_address, market_slug, event_ts);
+CREATE INDEX IF NOT EXISTS idx_execution_quality_role ON execution_quality_events(likely_liquidity_role);
+
+CREATE TABLE IF NOT EXISTS paper_pair_builder_decisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    market_slug TEXT,
+    market_id TEXT,
+    token_id TEXT,
+    ts TEXT NOT NULL,
+    seconds_after_open REAL,
+    seconds_to_close REAL,
+    side TEXT,
+    decision TEXT CHECK(decision IN ('quote','skip','fill_simulated','cancel','repair')),
+    quote_price REAL,
+    reference_bid REAL,
+    reference_ask REAL,
+    reference_mid REAL,
+    size REAL,
+    reason TEXT,
+    projected_pair_cost REAL,
+    yes_qty REAL,
+    no_qty REAL,
+    yes_avg_entry REAL,
+    no_avg_entry REAL,
+    matched_pair_qty REAL,
+    matched_pair_cost REAL,
+    locked_profit_if_held REAL,
+    unpaired_side TEXT,
+    unpaired_qty REAL,
+    imbalance_ratio REAL,
+    tags TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_pair_builder_market_ts ON paper_pair_builder_decisions(market_slug, market_id, ts);
+CREATE INDEX IF NOT EXISTS idx_pair_builder_pair_cost ON paper_pair_builder_decisions(matched_pair_cost);
+CREATE INDEX IF NOT EXISTS idx_pair_builder_decision ON paper_pair_builder_decisions(decision);
+
+CREATE TABLE IF NOT EXISTS paper_pair_builder_active_quotes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    market_slug TEXT,
+    market_id TEXT,
+    side TEXT NOT NULL,
+    quote_price REAL NOT NULL,
+    size REAL NOT NULL,
+    placed_ts TEXT NOT NULL,
+    last_seen_ts TEXT,
+    status TEXT NOT NULL CHECK(status IN ('active','filled','cancelled','expired')) DEFAULT 'active',
+    fill_ts TEXT,
+    cancel_ts TEXT,
+    cancel_reason TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_pair_builder_active_quotes_market ON paper_pair_builder_active_quotes(market_slug, market_id, side, status);

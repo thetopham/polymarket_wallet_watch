@@ -28,6 +28,8 @@ def test_schema_creates_required_tables(tmp_path):
         "leader_follower_edges",
         "signal_replay_results",
         "raw_api_responses",
+        "execution_quality_events",
+        "paper_pair_builder_decisions",
     }.issubset(tables)
 
 
@@ -63,4 +65,4 @@ def test_schema_file_is_loadable_directly():
     schema_path = Path(__file__).resolve().parents[1] / "sql" / "schema.sql"
     conn = sqlite3.connect(":memory:")
     conn.executescript(schema_path.read_text())
-    assert conn.execute("select count(*) from sqlite_master where type='table'").fetchone()[0] >= 10
+    assert conn.execute("select count(*) from sqlite_master where type='table'").fetchone()[0] >= 11

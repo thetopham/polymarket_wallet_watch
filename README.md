@@ -105,6 +105,12 @@ Export leader/follower table:
 
     .venv/bin/python -m polymarket_wallet_watch.leader_follower --config config.yaml --output leader_follower_edges.csv
 
+Serve the read-only local dashboard:
+
+    .venv/bin/python -m polymarket_wallet_watch.dashboard --config config.yaml --host 127.0.0.1 --port 8793
+
+The dashboard is API-neutral: it reads local SQLite only and does not call Polymarket, Polygon, or broker APIs. Refresh data with the ingest/enrichment commands separately.
+
 ## Full Contract Pair-Cost Study
 
 Current priority: before broad convergence work, test whether BTC 15m markets repeatedly offer cheap full-contract pair inventory such as:
